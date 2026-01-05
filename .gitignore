@@ -1,0 +1,27 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Environments
+.env
+.venv/
+venv/
+env/
+
+# Packaging / tooling
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+pip-wheel-metadata/
+.coverage
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Data outputs
+*.csv
+dynimmo_data*.csv
+*.log
