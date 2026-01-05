@@ -24,4 +24,5 @@ pip-wheel-metadata/
 # Data outputs
 *.csv
 dynimmo_data*.csv
+*.parquet
 *.log
