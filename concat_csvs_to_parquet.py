@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
 """
 Concatenate the yearly DVF CSVs in `data/` into a single DataFrame, add a
 `year` column inferred from the filename (e.g., 2020full.csv -> year=2020),
 and write the result to Parquet.
 """
+
+from __future__ import annotations
 
 import re
 from pathlib import Path

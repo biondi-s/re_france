@@ -45,15 +45,24 @@ def summarize_numeric(df: pd.DataFrame) -> pd.DataFrame:
     numeric_cols = df.select_dtypes(include=["number"]).columns
     if len(numeric_cols) == 0:
         return pd.DataFrame()
-    return df[numeric_cols].describe(percentiles=[0.25, 0.5, 0.75, 0.9, 0.99]).T
+    df_sum = df[numeric_cols].describe(
+        percentiles=[0.25, 0.5, 0.75, 0.9, 0.99]
+    ).T
+    return df_sum
 
 
 def summarize_price_per_m2(df: pd.DataFrame) -> pd.DataFrame | None:
     price_col_candidates = ["valeur_fonciere", "prix"]
     area_col_candidates = ["surface_reelle_bati", "surface", "surface_terrain"]
 
-    price_col = next((c for c in price_col_candidates if c in df.columns), None)
-    area_col = next((c for c in area_col_candidates if c in df.columns), None)
+    price_col = next(
+        (c for c in price_col_candidates if c in df.columns),
+        None
+    )
+    area_col = next(
+        (c for c in area_col_candidates if c in df.columns),
+        None
+    )
     if not price_col or not area_col:
         return None
 
@@ -64,9 +73,17 @@ def summarize_price_per_m2(df: pd.DataFrame) -> pd.DataFrame | None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run quick EDA on dvf_2020_2025.parquet")
-    parser.add_argument("--path", type=Path, default=DEFAULT_PATH, help="Parquet file to analyze")
-    parser.add_argument("--sample", type=int, default=DEFAULT_SAMPLE, help="Optional row sample for speed")
+    parser = argparse.ArgumentParser(
+        description="Run quick EDA on dvf_2020_2025.parquet"
+    )
+    parser.add_argument(
+        "--path", type=Path, default=DEFAULT_PATH,
+        help="Parquet file to analyze"
+    )
+    parser.add_argument(
+        "--sample", type=int, default=DEFAULT_SAMPLE,
+        help="Optional row sample for speed"
+    )
     args = parser.parse_args()
 
     df = load_data(args.path, sample=args.sample)
@@ -93,9 +110,14 @@ def main() -> None:
     else:
         print(numeric_summary)
 
+    categories = ["nature_mutation",
+                  "type_local",
+                  "code_departement",
+                  "code_commune",
+                  "code_postal"]
     maybe_summarize_categories(
         df,
-        ["nature_mutation", "type_local", "code_departement", "code_commune", "code_postal"],
+        categories
     )
 
     ppm2 = summarize_price_per_m2(df)
