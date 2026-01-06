@@ -24,4 +24,4 @@ Concatenate the `data/*full.csv` files, add a `year` column from filenames, and 
 ```bash
 python concat_csvs_to_parquet.py
 ```
-The output is `data/all_years.parquet` (Snappy compressed). Streaming keeps memory usage reasonable even for large CSVs.
+The output is `data/dvf_2020_2025.parquet` (Snappy compressed). Streaming keeps memory usage reasonable even for large CSVs.

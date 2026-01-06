@@ -11,7 +11,7 @@ import pandas as pd
 
 
 DATA_DIR = Path("data")
-OUTPUT_PATH = Path("data/all_years.parquet")
+OUTPUT_PATH = Path("data/dvf_2020_2025.parquet")
 # Expect filenames like 2020full.csv, 2021full.csv, etc.
 YEAR_PATTERN = re.compile(r"^(?P<year>\d{4})full\.csv$")
 
