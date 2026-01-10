@@ -8,6 +8,7 @@ __pycache__/
 .venv/
 venv/
 env/
+re_france/
 
 # Packaging / tooling
 *.egg-info/
@@ -26,3 +27,4 @@ pip-wheel-metadata/
 dynimmo_data*.csv
 *.parquet
 *.log
+*.geojson
