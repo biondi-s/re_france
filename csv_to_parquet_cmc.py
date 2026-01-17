@@ -21,7 +21,8 @@ STRING_COLUMNS = [
     "plm",
     "paris",
 ]
-CAPITALIMMO_PREFIX = "capitalimmo"
+PRIXBIEN_PREFIX = "prixbien"
+PRIXM2_PREFIX = "prixm2"
 
 
 def load_csv(path: Path) -> pd.DataFrame:
@@ -31,17 +32,17 @@ def load_csv(path: Path) -> pd.DataFrame:
 
 
 def reshape_capitalimmo(df: pd.DataFrame) -> pd.DataFrame:
-    ratio_cols = [c for c in df.columns if c.startswith(CAPITALIMMO_PREFIX) and "agglo" not in c]
-    if not ratio_cols:
+    cols = [c for c in df.columns if c.startswith((PRIXBIEN_PREFIX, PRIXM2_PREFIX))]
+    if not cols:
         raise ValueError(
-            f"No columns found with prefix '{CAPITALIMMO_PREFIX}'."
+            f"No columns found with prefix '{PRIXBIEN_PREFIX}'."
         )
 
-    long_df = df[STRING_COLUMNS + ratio_cols].copy()
+    long_df = df[STRING_COLUMNS + cols].copy()
 
     long_df = long_df.melt(
         id_vars=STRING_COLUMNS,
-        value_vars=ratio_cols,
+        value_vars=cols,
         var_name="year",
         value_name=CAPITALIMMO_PREFIX,
     )
