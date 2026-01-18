@@ -106,4 +106,8 @@ def merge_cic_communes_then_arrondissements(
 
         merged = pd.concat(cleaned, ignore_index=True)
 
+    # Remove the departments of Corsica (2A, 2B) due to their distance from
+    # the rest of the territory and consequent insignificance for the study.
+    merged = merged[~merged["dep"].isin(["2A", "2B"])]
+
     return gpd.GeoDataFrame(merged, geometry="geometry", crs=crs)
