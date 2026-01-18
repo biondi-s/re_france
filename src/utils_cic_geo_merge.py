@@ -4,6 +4,7 @@ from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
+import numpy as np
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -14,14 +15,19 @@ DEFAULT_ARRONDISSEMENTS_PATH = (
     REPO_ROOT / "data/raw/arrondissements_municipaux.geojson"
 )
 
+DEFAULT_CIC_CODE = "codecommune"
+DEFAULT_COMMUNES_CODE = "code"
+DEFAULT_ARRONDISSEMENTS_CODE = "code_insee"
+
 
 def merge_cic_communes_then_arrondissements(
     cic_path: Path | str = DEFAULT_CIC_PATH,
     communes_geojson_path: Path | str = DEFAULT_COMMUNES_PATH,
     arrondissements_geojson_path: Path | str = DEFAULT_ARRONDISSEMENTS_PATH,
-    cic_code_col: str = "codecommune",
-    communes_code_col: str = "code",
-    arrondissements_code_col: str = "code_insee",
+    cic_code_col: str = DEFAULT_CIC_CODE,
+    communes_code_col: str = DEFAULT_COMMUNES_CODE,
+    arrondissements_code_col: str = DEFAULT_ARRONDISSEMENTS_CODE,
+    clean_iqr: bool = False,
     verbose: bool = False
 ) -> gpd.GeoDataFrame:
 
@@ -77,5 +83,27 @@ def merge_cic_communes_then_arrondissements(
         print(merged[merged["geometry"].isna()]["nomcommune"].unique())
 
     merged = merged[~merged["geometry"].isna()]
+
+    if clean_iqr:
+
+        cleaned = []
+        dropped_total = 0
+        for metric, df_metric in merged.groupby("metric", dropna=False):
+            q1 = df_metric["value"].quantile(0.25)
+            q3 = df_metric["value"].quantile(0.75)
+            iqr = q3 - q1
+            lower = q1 - 2.5 * iqr
+            upper = q3 + 2.5 * iqr
+            before = len(df_metric)
+            df_metric = df_metric[df_metric["value"].between(lower, upper)]
+            dropped_total += before - len(df_metric)
+            cleaned.append(df_metric)
+
+        if verbose:
+            print(
+                f"Dropped {dropped_total:,} rows by IQR cleaning, "
+                f"{np.round(dropped_total / len(merged), 4)}, of the total")
+
+        merged = pd.concat(cleaned, ignore_index=True)
 
     return gpd.GeoDataFrame(merged, geometry="geometry", crs=crs)
