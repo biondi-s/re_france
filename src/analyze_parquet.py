@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 
 
-DEFAULT_PATH = Path("data/dvf_2020_2025.parquet")
+DEFAULT_PATH = Path("data/processed/dvf_2020_2025.parquet")
 DEFAULT_SAMPLE = None  # set an int to sample that many rows for quicker runs
 
 

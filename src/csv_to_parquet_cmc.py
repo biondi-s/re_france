@@ -11,8 +11,8 @@ from pathlib import Path
 import pandas as pd
 
 
-DEFAULT_INPUT = Path("data/capitalimmobiliercommunes.csv")
-DEFAULT_OUTPUT = Path("data/cic_1790_2022.parquet")
+DEFAULT_INPUT = Path("data/raw/capitalimmobiliercommunes.csv")
+DEFAULT_OUTPUT = Path("data/processed/cic_1970_2022.parquet")
 STRING_COLUMNS = [
     "dep",
     "nomdep",
@@ -32,10 +32,11 @@ def load_csv(path: Path) -> pd.DataFrame:
 
 
 def reshape_capitalimmo(df: pd.DataFrame) -> pd.DataFrame:
-    cols = [c for c in df.columns if c.startswith((PRIXBIEN_PREFIX, PRIXM2_PREFIX))]
+    prefixes = (PRIXBIEN_PREFIX, PRIXM2_PREFIX)
+    cols = [c for c in df.columns if c.startswith(prefixes) and "ratio" not in c]
     if not cols:
         raise ValueError(
-            f"No columns found with prefix '{PRIXBIEN_PREFIX}'."
+            f"No columns found with prefixes {prefixes}."
         )
 
     long_df = df[STRING_COLUMNS + cols].copy()
@@ -43,10 +44,13 @@ def reshape_capitalimmo(df: pd.DataFrame) -> pd.DataFrame:
     long_df = long_df.melt(
         id_vars=STRING_COLUMNS,
         value_vars=cols,
-        var_name="year",
-        value_name=CAPITALIMMO_PREFIX,
+        var_name="metric_year",
+        value_name="value",
     )
-    long_df["year"] = long_df["year"].str[len(CAPITALIMMO_PREFIX):]
+    long_df[["metric", "year"]] = long_df["metric_year"].str.extract(
+        rf"^({'|'.join(prefixes)})(.+)$"
+    )
+    long_df = long_df.drop(columns=["metric_year"])
     return long_df
 
 

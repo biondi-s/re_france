@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Concatenate the yearly DVF CSVs in `data/` into a single DataFrame, add a
+Concatenate the yearly DVF CSVs in `data/raw/` into a single DataFrame, add a
 `year` column inferred from the filename (e.g., 2020full.csv -> year=2020),
 and write the result to Parquet.
 """
@@ -13,8 +13,8 @@ from pathlib import Path
 import pandas as pd
 
 
-DATA_DIR = Path("data")
-OUTPUT_PATH = Path("data/dvf_2020_2025.parquet")
+DATA_DIR = Path("data/raw")
+OUTPUT_PATH = Path("data/processed/dvf_2020_2025.parquet")
 # Expect filenames like 2020full.csv, 2021full.csv, etc.
 YEAR_PATTERN = re.compile(r"^(?P<year>\d{4})full\.csv$")
 
