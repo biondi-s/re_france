@@ -35,6 +35,27 @@ def year_from_name(csv_path: Path) -> int:
     return int(match.group("year"))
 
 
+def filter_dvf_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Filter the DVF DataFrame according to criteria."""
+
+    total_len = len(df)
+    print(f"Total rows: {total_len/1e6:.1f} mln")
+
+    df = df[df["valeur_fonciere"].notna()]
+    print(f"After valeur_fonciere not null: {len(df)/1e6:.1f} mln")
+
+    df = df[df["nature_mutation"] == "Vente"]
+    print(f"After nature_mutation == 'Vente': {len(df)/1e6:.1f} mln")
+
+    df = df[df["code_type_local"].isin([1, 2, "1", "2"])]
+    print(
+            f"After code_type_local in [1, 2]: {len(df)/1e6:.1f} mln\n"
+            f"({len(df) / total_len:.1f} of total)"
+    )
+
+    return df
+
+
 def stream_to_parquet(csv_files: list[Path]) -> int:
     """Load each CSV into a DataFrame, concatenate,
     and write a single Parquet."""
@@ -47,9 +68,13 @@ def stream_to_parquet(csv_files: list[Path]) -> int:
         frames.append(df)
 
     combined = pd.concat(frames, ignore_index=True)
+
+    df = filter_dvf_df(combined)
+
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    combined.to_parquet(OUTPUT_PATH, engine="pyarrow", compression="snappy")
-    return len(combined)
+    df.to_parquet(OUTPUT_PATH, engine="pyarrow", compression="snappy")
+
+    return len(df)
 
 
 def main() -> None:

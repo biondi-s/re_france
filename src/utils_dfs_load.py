@@ -21,7 +21,7 @@ DEFAULT_COMMUNES_CODE = "code"
 DEFAULT_ARRONDISSEMENTS_CODE = "code_insee"
 
 
-def merge_cic_communes_then_arrondissements(
+def merge_communes_then_arrondissements_cic(
     cic_path: Path | str = DEFAULT_CIC_PATH,
     communes_geojson_path: Path | str = DEFAULT_COMMUNES_PATH,
     arrondissements_geojson_path: Path | str = DEFAULT_ARRONDISSEMENTS_PATH,
@@ -116,28 +116,56 @@ def merge_cic_communes_then_arrondissements(
 
 def load_and_filter_dvf(
     dvf_path: Path | str = DEFAULT_DVF_PATH,
-    verbose: bool = False,
 ) -> pd.DataFrame:
 
     dvf_df = pd.read_parquet(dvf_path)
-    total_len = len(dvf_df)
 
-    if verbose:
-        print(f"Total rows: {total_len/1e6:.1f} mln")
+    required_cols = [
+        "date_mutation",
+        "valeur_fonciere",
+        "surface_reelle_bati",
+        "latitude",
+        "longitude",
+    ]
+    df = dvf_df.loc[:, required_cols].copy()
 
-    dvf_df = dvf_df[dvf_df["valeur_fonciere"].notna()]
-    if verbose:
-        print(f"After valeur_fonciere not null: {len(dvf_df)/1e6:.1f} mln")
+    df = df.assign(
+        date_mutation=pd.to_datetime(
+            df["date_mutation"],
+            errors="coerce"
+        ),
+        valeur_fonciere=pd.to_numeric(
+            df["valeur_fonciere"],
+            errors="coerce"
+        ),
+        surface_reelle_bati=pd.to_numeric(
+            df["surface_reelle_bati"],
+            errors="coerce"
+        ),
+    )
 
-    dvf_df = dvf_df[dvf_df["nature_mutation"] == "Vente"]
-    if verbose:
-        print(f"After nature_mutation == 'Vente': {len(dvf_df)/1e6:.1f} mln")
+    total_len = len(df)
+    print(f"Total rows: {total_len/1e6:.1f} mln")
 
-    dvf_df = dvf_df[dvf_df["code_type_local"].isin([1, 2, "1", "2"])]
-    if verbose:
-        print(
-            f"After code_type_local in [1, 2]: {len(dvf_df)/1e6:.1f} mln\n"
-            f"({np.round(len(dvf_df) / total_len, 4)} of total)"
-        )
+    df = df.dropna(
+        subset=[
+            "date_mutation",
+            "valeur_fonciere",
+            "latitude",
+            "longitude",
+        ]
+    )
 
-    return dvf_df
+    print(
+        "After drop_na for columns that are not 'surface_reelle_bati': ",
+        f"{len(df)/1e6:.1f} mln\n",
+        f"({len(df) / total_len:.2f} of total)"
+    )
+
+    df["price_sqm"] = np.where(
+        df["surface_reelle_bati"] > 0,
+        df["valeur_fonciere"] / df["surface_reelle_bati"],
+        np.nan,
+    )
+
+    return df
