@@ -14,6 +14,7 @@ DEFAULT_COMMUNES_PATH = REPO_ROOT / "data/raw/communes.geojson"
 DEFAULT_ARRONDISSEMENTS_PATH = (
     REPO_ROOT / "data/raw/arrondissements_municipaux.geojson"
 )
+DEFAULT_DVF_PATH = REPO_ROOT / "data/processed/dvf_2020_2025.parquet"
 
 DEFAULT_CIC_CODE = "codecommune"
 DEFAULT_COMMUNES_CODE = "code"
@@ -111,3 +112,32 @@ def merge_cic_communes_then_arrondissements(
     merged = merged[~merged["dep"].isin(["2A", "2B"])]
 
     return gpd.GeoDataFrame(merged, geometry="geometry", crs=crs)
+
+
+def load_and_filter_dvf(
+    dvf_path: Path | str = DEFAULT_DVF_PATH,
+    verbose: bool = False,
+) -> pd.DataFrame:
+
+    dvf_df = pd.read_parquet(dvf_path)
+    total_len = len(dvf_df)
+
+    if verbose:
+        print(f"Total rows: {total_len/1e6:.1f} mln")
+
+    dvf_df = dvf_df[dvf_df["valeur_fonciere"].notna()]
+    if verbose:
+        print(f"After valeur_fonciere not null: {len(dvf_df)/1e6:.1f} mln")
+
+    dvf_df = dvf_df[dvf_df["nature_mutation"] == "Vente"]
+    if verbose:
+        print(f"After nature_mutation == 'Vente': {len(dvf_df)/1e6:.1f} mln")
+
+    dvf_df = dvf_df[dvf_df["code_type_local"].isin([1, 2, "1", "2"])]
+    if verbose:
+        print(
+            f"After code_type_local in [1, 2]: {len(dvf_df)/1e6:.1f} mln\n"
+            f"({np.round(len(dvf_df) / total_len, 4)} of total)"
+        )
+
+    return dvf_df
