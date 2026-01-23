@@ -145,6 +145,7 @@ def load_and_filter_dvf(
     )
 
     total_len = len(df)
+
     print(f"Total rows: {total_len/1e6:.1f} mln")
 
     df = df.dropna(
@@ -156,8 +157,10 @@ def load_and_filter_dvf(
         ]
     )
 
+    df = df[df["valeur_fonciere"] > 0]
+
     print(
-        "After drop_na for columns that are not 'surface_reelle_bati': ",
+        "After drop_na and price > 0: ",
         f"{len(df)/1e6:.1f} mln\n",
         f"({len(df) / total_len:.2f} of total)"
     )
@@ -167,5 +170,9 @@ def load_and_filter_dvf(
         df["valeur_fonciere"] / df["surface_reelle_bati"],
         np.nan,
     )
+
+    df["log_price"] = np.log(df["valeur_fonciere"])
+
+    df["log_price_sqm"] = np.log(df["price_sqm"])
 
     return df
