@@ -121,13 +121,21 @@ def load_and_filter_dvf(
     dvf_df = pd.read_parquet(dvf_path)
 
     required_cols = [
+        "id_mutation",
         "date_mutation",
+        "code_departement",
         "valeur_fonciere",
         "surface_reelle_bati",
         "latitude",
         "longitude",
     ]
-    df = dvf_df.loc[:, required_cols].copy()
+
+    # overseas departments and Corsica
+    mask_departments = dvf_df["code_departement"].isin(
+        ["2A", "2B", "971", "972", "973", "974"]
+    )
+
+    df = dvf_df.loc[~mask_departments, required_cols].copy()
 
     df = df.assign(
         date_mutation=pd.to_datetime(
@@ -161,6 +169,16 @@ def load_and_filter_dvf(
 
     print(
         "After drop_na and price > 0: ",
+        f"{len(df)/1e6:.1f} mln"
+    )
+
+    # Only surface_reelle_bati varies within id_mutation; keep first row for others.
+    sr_nunique = df.groupby("id_mutation")["surface_reelle_bati"].nunique(dropna=False)
+    df = df.drop_duplicates("id_mutation", keep="first")
+    df.loc[df["id_mutation"].map(sr_nunique) > 1, "surface_reelle_bati"] = np.nan
+
+    print(
+        "After groupby id_mutation: ",
         f"{len(df)/1e6:.1f} mln\n",
         f"({len(df) / total_len:.2f} of total)"
     )
@@ -176,3 +194,7 @@ def load_and_filter_dvf(
     df["log_price_sqm"] = np.log(df["price_sqm"])
 
     return df
+
+
+if __name__ == "__main__":
+    dvf_df = load_and_filter_dvf()
